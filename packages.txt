@@ -5,4 +5,4 @@ libxcursor1
 libxi6
 libxrandr2
 libgtk-3-0
-chromium-browser
+chromium
