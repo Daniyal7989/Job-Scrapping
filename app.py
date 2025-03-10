@@ -252,25 +252,27 @@ def extract_profile_summary(text):
 
 def init_driver():
     options = Options()
-    options.add_argument("--headless")  # Run headless mode since Streamlit Cloud doesn't provide a display
+    options.add_argument("--headless")  # Run headless in cloud environments.
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--remote-debugging-port=9222")  # Helps with headless mode stability
+    options.add_argument("--remote-debugging-port=9222")  # Helps with headless mode
     options.add_argument("--start-maximized")
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
     
-    # Set the binary location to the installed Chromium browser.
-    options.binary_location = "/usr/bin/chromium-browser"
-    
-    # Use ChromeDriver that supports Chrome/Chromium version 133
+    # Set the binary location to the correct path. For Streamlit Cloud (Debian),
+    # installing "chromium" (via packages.txt) usually places the binary at /usr/bin/chromium.
+    options.binary_location = "/usr/bin/chromium"
+
+    # Use the ChromeDriver that supports Chrome version 133.
     driver_path = ChromeDriverManager(driver_version="133.0.6943.126").install()
     os.chmod(driver_path, 0o755)  # Ensure the driver is executable
     
     service = Service(driver_path)
     driver = webdriver.Chrome(service=service, options=options)
     return driver
+
 
 def scrape_dice(job_role, driver):
     print(f"🔍 Scraping Dice for: {job_role}")
