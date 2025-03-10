@@ -234,7 +234,7 @@ def extract_profile_summary(text):
     
     return "Profile summary not found"
 
-# --- Job Scraping Functions ---
+#--- Job Scraping Functions ---
 def init_driver():
     options = Options()
     options.add_argument("--headless")
@@ -244,7 +244,7 @@ def init_driver():
     options.add_argument("--start-maximized")
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
-    service = Service(ChromeDriverManager(version="133.0.6943.126").install())
+    service = Service(ChromeDriverManager(driver_version="133.0.6943.126").install())
     return webdriver.Chrome(service=service, options=options)
 
 def scrape_dice(job_role, driver):
