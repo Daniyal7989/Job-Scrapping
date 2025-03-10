@@ -1,0 +1,8 @@
+
+pdfplumber
+streamlit
+python-docx
+beautifulsoup4
+selenium
+webdriver-manager
+pandas
