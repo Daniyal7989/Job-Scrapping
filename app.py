@@ -10,7 +10,13 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 import pandas as pd
 import os
-
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.firefox.service import Service as FirefoxService
+from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.firefox import GeckoDriverManager
 
 def parse_resume(file):
     # Determine file extension
@@ -236,19 +242,82 @@ def extract_profile_summary(text):
     return "Profile summary not found"
 
 #--- Job Scraping Functions ---
-def init_driver():
-    options = Options()
-    options.add_argument("--headless")
+# def init_driver():
+#     options = Options()
+#     options.add_argument("--headless")
+#     options.add_argument("--disable-gpu")
+#     options.add_argument("--no-sandbox")
+#     options.add_argument("--disable-dev-shm-usage")
+#     options.add_argument("--start-maximized")
+#     options.add_argument("--disable-blink-features=AutomationControlled")
+#     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+#     service = Service(ChromeDriverManager(driver_version="133.0.6943.126").install())
+#     return webdriver.Chrome(service=service, options=options)
+
+def get_chrome_binary():
+    """Return the first existing chrome/chromium binary path from a list."""
+    possible_paths = [
+        "/opt/google/chrome/chrome",      # Typical Google Chrome location
+        "/usr/bin/chromium",              # Common Chromium location
+        "/usr/bin/chromium-browser"       # Alternative Chromium location
+    ]
+    for path in possible_paths:
+        if os.path.exists(path):
+            return path
+    return None
+
+def init_chrome_driver():
+    options = ChromeOptions()
+    options.add_argument("--headless")  # Headless mode for cloud environments
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--remote-debugging-port=9222")  # For headless stability
     options.add_argument("--start-maximized")
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
-    service = Service(ChromeDriverManager(driver_version="133.0.6943.126").install())
-    return webdriver.Chrome(service=service, options=options)
 
+    chrome_binary = get_chrome_binary()
+    if not chrome_binary:
+        raise Exception("No Chrome or Chromium binary found!")
+    options.binary_location = chrome_binary
 
+    # Choose ChromeDriver version based on the binary found.
+    # For example, if Google Chrome is installed, assume version 133.
+    # If Chromium is installed, assume version 120.
+    if "google/chrome" in chrome_binary:
+        driver_version = "133.0.6943.126"
+    else:
+        driver_version = "120.0.6099.224"
+    
+    driver_path = ChromeDriverManager(driver_version=driver_version).install()
+    os.chmod(driver_path, 0o755)  # Make sure the driver is executable
+    service = ChromeService(driver_path)
+    driver = webdriver.Chrome(service=service, options=options)
+    return driver
+
+def init_firefox_driver():
+    options = FirefoxOptions()
+    options.add_argument("--headless")
+    driver_path = GeckoDriverManager().install()
+    service = FirefoxService(driver_path)
+    driver = webdriver.Firefox(service=service, options=options)
+    return driver
+
+def init_driver():
+    """
+    Attempt to initialize a Chrome/Chromium driver.
+    If that fails, fall back to a Firefox driver.
+    """
+    try:
+        driver = init_chrome_driver()
+        print("Initialized Chrome/Chromium driver.")
+        return driver
+    except Exception as e:
+        print("Chrome driver initialization failed, trying Firefox. Error:", e)
+        driver = init_firefox_driver()
+        print("Initialized Firefox driver.")
+        return driver
 
 
 def scrape_dice(job_role, driver):
