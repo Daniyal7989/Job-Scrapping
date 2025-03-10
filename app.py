@@ -9,6 +9,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 import pandas as pd
+import os
 
 
 def parse_resume(file):
@@ -235,6 +236,18 @@ def extract_profile_summary(text):
     return "Profile summary not found"
 
 #--- Job Scraping Functions ---
+# def init_driver():
+#     options = Options()
+#     options.add_argument("--headless")
+#     options.add_argument("--disable-gpu")
+#     options.add_argument("--no-sandbox")
+#     options.add_argument("--disable-dev-shm-usage")
+#     options.add_argument("--start-maximized")
+#     options.add_argument("--disable-blink-features=AutomationControlled")
+#     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+#     service = Service(ChromeDriverManager(driver_version="133.0.6943.126").install())
+#     return webdriver.Chrome(service=service, options=options)
+
 def init_driver():
     options = Options()
     options.add_argument("--headless")
@@ -244,7 +257,14 @@ def init_driver():
     options.add_argument("--start-maximized")
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
-    service = Service(ChromeDriverManager(driver_version="133.0.6943.126").install())
+
+    # Optionally, if using Chromium on Streamlit Cloud:
+    # options.binary_location = "/usr/bin/chromium-browser"
+
+    driver_path = ChromeDriverManager(driver_version="133.0.6943.126").install()
+    os.chmod(driver_path, 0o755)  # Ensure the binary is executable
+
+    service = Service(driver_path)
     return webdriver.Chrome(service=service, options=options)
 
 def scrape_dice(job_role, driver):
